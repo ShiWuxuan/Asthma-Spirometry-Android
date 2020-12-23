@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.util.Log;
 import com.jasperlu.doppler.FFT.FFT;
 import java.io.IOException;
+import java.util.Arrays;
 
 public class Doppler {
   public static final int DEFAULT_SAMPLE_RATE = 44100;
@@ -302,6 +303,8 @@ public class Doppler {
     for (i = 0; i < this.fft.specSize(); i++)
       this.oldFreqs[i] = this.fft.getBand(i); 
     i = this.microphone.read(this.buffer, 0, this.bufferSize);
+    Log.d(TAG, "readAndFFT_1: "+i);
+    Log.d(TAG, "readAndFFT_2: "+ Arrays.toString(this.buffer));
     this.bufferReadResult = i;
     try {
       this.util.writeData(this.buffer, i);

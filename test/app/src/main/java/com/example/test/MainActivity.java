@@ -2,6 +2,7 @@ package com.example.test;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
@@ -13,7 +14,12 @@ import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import com.jasperlu.doppler.Doppler;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -21,6 +27,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.achartengine.ChartFactory;
 import org.achartengine.GraphicalView;
 import org.achartengine.chart.PointStyle;
@@ -103,11 +113,17 @@ public class MainActivity extends AppCompatActivity {
 
     private long timetag = 0L;
 
+    String[] permissions = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+    List<String> mPermissionList = new ArrayList<>();
+
+    // private ImageView welcomeImg = null;
+    private static final int PERMISSION_REQUEST = 1;
+
     public MainActivity() {
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(Environment.getExternalStorageDirectory().getPath());
-        stringBuilder.append("/CollectedData/BINS文件/");
-        this.CollectedDataPath = stringBuilder.toString();
+        String stringBuilder;
+        stringBuilder = Environment.getExternalStorageDirectory().getPath() +
+                "/CollectedData/BINS文件/";
+        this.CollectedDataPath = stringBuilder;
     }
 
     private double ESD_result(int paramInt1, int paramInt2, double[] paramArrayOfdouble) {
@@ -122,10 +138,19 @@ public class MainActivity extends AppCompatActivity {
     private int findTag(String paramString) {
         File file = new File(paramString);
         if (!file.exists()) {
-            file.mkdirs();
+            boolean isCreate = file.mkdirs();
+            if(!isCreate){
+                Log.d(TAG, "findTag: 文件夹未生成");
+            }
             return 0;
         }
+        //返回一个字符串数组，命名该抽象路径名表示的目录中的文件和目录。
         String[] arrayOfString = file.list();
+        if(arrayOfString==null)
+        {
+            Log.d(TAG, "findTag: arrayIsNull");
+        }
+        Log.d(TAG, "findTag: "+ Arrays.toString(arrayOfString));
         int k = arrayOfString.length;
         if (k == 0)
             return 0;
@@ -209,6 +234,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle paramBundle) {
         super.onCreate(paramBundle);
         setContentView(R.layout.activity_main);
+        checkPermission();
         this.promptTextView = (TextView)findViewById(R.id.promptText);
         this.tag = findTag(this.CollectedDataPath);
         this.doppler = new Doppler();
@@ -219,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
         this.btStart = button;
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View param1View) {
-                MainActivity.this.btStart.setSelected(MainActivity.this.btStart.isSelected() ^ true);
+                MainActivity.this.btStart.setSelected(!MainActivity.this.btStart.isSelected());
                 if (MainActivity.this.btStart.isSelected()) {
                     MainActivity.this.btStart.setText("结束录音");
                     /**
@@ -270,6 +296,9 @@ public class MainActivity extends AppCompatActivity {
                     stringBuilder.append(MainActivity.this.tag);
                     stringBuilder.append(".csv");
                     mainActivity1.file = new File(str, stringBuilder.toString());
+                    Log.d(TAG, "onBinsRead: canWrite"+file.canWrite());
+                    Log.d(TAG, "onBinsRead: canRead"+file.canRead());
+                    Log.d(TAG, "onBinsRead: exists"+file.exists());
                     try {
                         MainActivity.this.file.createNewFile();
 //                        MainActivity.access$1102(MainActivity.this, new FileOutputStream(MainActivity.this.file));
@@ -402,15 +431,17 @@ public class MainActivity extends AppCompatActivity {
 //                    MainActivity.access$1902(MainActivity.this, false);
                     MainActivity.this.firstChart2 = false;
                 }
+                Log.i(TAG, "onBinsRead: 是否为0："+MainActivity.this.chart2Len);
                 MainActivity.this.chart2Data[MainActivity.this.currentIndex] = d1;
                 for (i = 0; i < MainActivity.this.chart2Len; i++)
                     MainActivity.this.mSeries2.add(i, MainActivity.this.chart2Data[(MainActivity.this.currentIndex + i + 1) % MainActivity.this.chart2Len]);
                 MainActivity mainActivity = MainActivity.this;
 //                MainActivity.access$2302(mainActivity, (mainActivity.currentIndex + 1) % MainActivity.this.chart2Len);
-                mainActivity.chart2Len = (mainActivity.currentIndex + 1) % MainActivity.this.chart2Len;
+                mainActivity.currentIndex = (mainActivity.currentIndex + 1) % MainActivity.this.chart2Len;
                 MainActivity.this.mChart2.repaint();
             }
         });
+
         this.doppler.setOnGestureListener(new Doppler.OnGestureListener() {
             public void onDoubleTap() {
                 MainActivity.this.promptTextView.setBackgroundColor(Color.GRAY);
@@ -437,6 +468,43 @@ public class MainActivity extends AppCompatActivity {
                 MainActivity.this.promptTextView.setText("tap");
             }
         });
+    }
+
+    private void checkPermission() {
+        mPermissionList.clear();
+
+        //判断哪些权限未授予
+        for (int i = 0; i < permissions.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, permissions[i]) != PackageManager.PERMISSION_GRANTED) {
+                mPermissionList.add(permissions[i]);
+            }
+        }
+        /**
+         * 判断是否为空
+         */
+        if (mPermissionList.isEmpty()) {//未授予的权限为空，表示都授予了
+
+        } else {//请求权限方法
+            String[] permissions = mPermissionList.toArray(new String[mPermissionList.size()]);//将List转为数组
+            ActivityCompat.requestPermissions(MainActivity.this, permissions, PERMISSION_REQUEST);
+        }
+    }
+
+    /**
+     * 响应授权
+     * 这里不管用户是否拒绝，都进入首页，不再重复申请权限
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case PERMISSION_REQUEST:
+
+                break;
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+                break;
+        }
     }
 }
 

@@ -10,8 +10,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 public class AudioUtil {
   private static final String TAG = "AudioUtil";
@@ -129,6 +131,10 @@ public class AudioUtil {
   }
 
   public static AudioUtil getInstance(AudioRecord paramAudioRecord, int paramInt) {
+    if (mInstance == null){
+      mInstance = new AudioUtil(paramAudioRecord,paramInt);
+    }
+
     // Byte code:
     //   0: ldc com/jasperlu/doppler/AudioUtil
     //   2: monitorenter
@@ -155,7 +161,7 @@ public class AudioUtil {
     //   from	to	target	type
     //   3	21	30	finally
     //   21	25	30	finally
-    return null;
+    return mInstance;
   }
   
   public static AudioUtil getNewInstance() {
@@ -232,7 +238,13 @@ public class AudioUtil {
     if (this.wavFile.exists())
       this.wavFile.delete(); 
     try {
-      this.pcmFile.createNewFile();
+      this.pcmFile.getParentFile().mkdirs();
+
+      boolean result = this.pcmFile.createNewFile();
+      if(result){
+        Log.d(TAG, "createFile: success");
+      }
+      this.wavFile.getParentFile().mkdirs();
       this.wavFile.createNewFile();
       stringBuilder = new StringBuilder();
       stringBuilder.append(this.basePath);
@@ -331,6 +343,9 @@ public class AudioUtil {
     if (this.firstTag) {
       this.nataArrayData = new short[bufferSize];
       try {
+        if (pcmFile!=null){
+          Log.d(TAG, "writeData: fileIsNotNull");
+        }
         this.os = new BufferedOutputStream(new FileOutputStream(this.pcmFile));
       } catch (IOException iOException) {
         iOException.printStackTrace();
@@ -340,14 +355,18 @@ public class AudioUtil {
     this.nataArrayData = paramArrayOfshort;
     byte[] arrayOfByte = new byte[bufferSize * 2];
     ByteBuffer.wrap(arrayOfByte).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().put(this.nataArrayData);
-    if (paramInt * 2 > 0)
+    if (paramInt * 2 > 0) {
       try {
+        Log.d(TAG, "writeData: "+ Arrays.toString(arrayOfByte));
+        if (this.os==null){
+          Log.d(TAG, "writeData: osIsNull");
+        }
         this.os.write(arrayOfByte);
-        return;
       } catch (IOException iOException) {
         iOException.printStackTrace();
         throw iOException;
-      }  
+      }
+    }
   }
 }
 
