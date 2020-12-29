@@ -4,18 +4,21 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
 import android.text.style.BackgroundColorSpan;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -27,6 +30,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.RandomAccessFile;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -78,6 +84,8 @@ public class MainActivity extends AppCompatActivity {
     File file = null;
 
     RandomAccessFile file_l = null;
+
+    RandomAccessFile file_2 = null;
 
     private boolean firstChart2 = true;
 
@@ -146,11 +154,13 @@ public class MainActivity extends AppCompatActivity {
         }
         //返回一个字符串数组，命名该抽象路径名表示的目录中的文件和目录。
         String[] arrayOfString = file.list();
-        if(arrayOfString==null)
-        {
-            Log.d(TAG, "findTag: arrayIsNull");
-        }
+//        if(arrayOfString==null)
+//        {
+//            Log.d(TAG, "findTag: arrayIsNull");
+//        }
         Log.d(TAG, "findTag: "+ Arrays.toString(arrayOfString));
+        return arrayOfString.length;
+        /**
         int k = arrayOfString.length;
         if (k == 0)
             return 0;
@@ -177,6 +187,7 @@ public class MainActivity extends AppCompatActivity {
             j = n;
         }
         return j;
+        */
     }
 
     private void renderGraph() {
@@ -237,6 +248,8 @@ public class MainActivity extends AppCompatActivity {
         checkPermission();
         this.promptTextView = (TextView)findViewById(R.id.promptText);
         this.tag = findTag(this.CollectedDataPath);
+        //保持屏幕常亮
+        this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         this.doppler = new Doppler();
         Chronometer chronometer = (Chronometer)findViewById(R.id.chronometer);
         this.chronometer = chronometer;
@@ -273,6 +286,31 @@ public class MainActivity extends AppCompatActivity {
         this.doppler.setOnReadCallback(new Doppler.OnReadCallback() {
             public void onBandwidthRead(int param1Int1, int param1Int2) {}
 
+            //写入时间戳
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            public void writeTimeStamp(){
+                try{
+                    MainActivity mainActivity1 = MainActivity.this;
+                    StringBuilder stringBuilder = new StringBuilder();
+                    stringBuilder.append(MainActivity.this.CollectedDataPath);
+                    stringBuilder.append("/TEST_BINS");
+                    stringBuilder.append(MainActivity.this.tag);
+                    stringBuilder.append(".csv");
+                    mainActivity1.file_2 = new RandomAccessFile(stringBuilder.toString(), "rw");
+                    long l = MainActivity.this.file_2.length();
+                    MainActivity.this.file_2.seek(l);
+                    String format = "YYYY-MM-dd hh:mm:ss:SSS";
+                    MainActivity.this.file_2.writeBytes(LocalDateTime.now(ZoneOffset.of("+8")).format(DateTimeFormatter.ofPattern(format)));
+                    MainActivity.this.file_2.writeBytes("\n");
+                    MainActivity.this.file_2.close();
+
+                    Log.d(TAG, "writeTimeStamp: 写入时间戳成功");
+                }catch (Exception exception) {
+                    exception.printStackTrace();
+                    Log.d(TAG, "writeTimeStamp: 写入时间戳失败");
+                }
+            }
+
             public void onBinsRead(double[] param1ArrayOfdouble) {
                 MainActivity.this.mSeries.clear();
                 MainActivity.this.div10.clear();
@@ -295,6 +333,7 @@ public class MainActivity extends AppCompatActivity {
                     stringBuilder.append("/TEST_BINS");
                     stringBuilder.append(MainActivity.this.tag);
                     stringBuilder.append(".csv");
+                    Log.i(TAG, "onBinsRead: fileName"+stringBuilder);
                     mainActivity1.file = new File(str, stringBuilder.toString());
                     Log.d(TAG, "onBinsRead: canWrite"+file.canWrite());
                     Log.d(TAG, "onBinsRead: canRead"+file.canRead());
@@ -431,7 +470,7 @@ public class MainActivity extends AppCompatActivity {
 //                    MainActivity.access$1902(MainActivity.this, false);
                     MainActivity.this.firstChart2 = false;
                 }
-                Log.i(TAG, "onBinsRead: 是否为0："+MainActivity.this.chart2Len);
+//                Log.i(TAG, "onBinsRead: 是否为0："+MainActivity.this.chart2Len);
                 MainActivity.this.chart2Data[MainActivity.this.currentIndex] = d1;
                 for (i = 0; i < MainActivity.this.chart2Len; i++)
                     MainActivity.this.mSeries2.add(i, MainActivity.this.chart2Data[(MainActivity.this.currentIndex + i + 1) % MainActivity.this.chart2Len]);

@@ -343,9 +343,11 @@ public class AudioUtil {
     if (this.firstTag) {
       this.nataArrayData = new short[bufferSize];
       try {
+        /*
         if (pcmFile!=null){
           Log.d(TAG, "writeData: fileIsNotNull");
         }
+        */
         this.os = new BufferedOutputStream(new FileOutputStream(this.pcmFile));
       } catch (IOException iOException) {
         iOException.printStackTrace();
@@ -358,9 +360,11 @@ public class AudioUtil {
     if (paramInt * 2 > 0) {
       try {
         Log.d(TAG, "writeData: "+ Arrays.toString(arrayOfByte));
+        /*
         if (this.os==null){
           Log.d(TAG, "writeData: osIsNull");
         }
+        */
         this.os.write(arrayOfByte);
       } catch (IOException iOException) {
         iOException.printStackTrace();

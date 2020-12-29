@@ -5,7 +5,6 @@ import android.os.Handler;
 import android.util.Log;
 import com.jasperlu.doppler.FFT.FFT;
 import java.io.IOException;
-import java.util.Arrays;
 
 public class Doppler {
   public static final int DEFAULT_SAMPLE_RATE = 44100;
@@ -89,6 +88,8 @@ public class Doppler {
   private AudioUtil util = null;
   
   private boolean wait_ges = false;
+
+  private long timeTag;
   
   public Doppler() {
     this.bufferSize = AudioRecord.getMinBufferSize(44100, 16, 2);
@@ -303,8 +304,6 @@ public class Doppler {
     for (i = 0; i < this.fft.specSize(); i++)
       this.oldFreqs[i] = this.fft.getBand(i); 
     i = this.microphone.read(this.buffer, 0, this.bufferSize);
-    Log.d(TAG, "readAndFFT_1: "+i);
-    Log.d(TAG, "readAndFFT_2: "+ Arrays.toString(this.buffer));
     this.bufferReadResult = i;
     try {
       this.util.writeData(this.buffer, i);
@@ -344,7 +343,12 @@ public class Doppler {
     int i = arrayOfInt[0];
     int j = arrayOfInt[1];
     if (System.currentTimeMillis() - this.time > 5000L)
-      this.calibrate = true; 
+      this.calibrate = true;
+    //判断是否要加入时间戳
+    if(System.currentTimeMillis() - this.timeTag > 10000L){
+      this.timeTag = System.currentTimeMillis();
+      this.readCallback.writeTimeStamp();
+    }
     if (this.isReadCallbackOn)
       callReadCallback(i, j); 
     if (this.isGestureListenerAttached)
@@ -401,6 +405,7 @@ public class Doppler {
       this.microphone.startRecording();
       this.util.startRecord();
       this.repeat = true;
+      Doppler.this.timeTag = System.currentTimeMillis();
       (new Handler()).post(new Runnable() {
             public void run() {
               Doppler.this.optimizeFrequency(19000, 21000);
@@ -438,6 +443,8 @@ public class Doppler {
   
   public static interface OnReadCallback {
     void onBandwidthRead(int param1Int1, int param1Int2);
+
+    void writeTimeStamp();
     
     void onBinsRead(double[] param1ArrayOfdouble);
   }
