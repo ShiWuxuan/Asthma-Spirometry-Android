@@ -261,6 +261,7 @@ public class MainActivity extends AppCompatActivity {
                 MainActivity.this.btStart.setSelected(!MainActivity.this.btStart.isSelected());
                 if (MainActivity.this.btStart.isSelected()) {
                     MainActivity.this.btStart.setText("结束录音");
+                    MainActivity.this.btStart.setBackgroundColor(Color.rgb(240,240,240));
                     /**
                     MainActivity.access$108(MainActivity.this);
                      */
@@ -273,6 +274,7 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 MainActivity.this.btStart.setText("开始录音");
+                MainActivity.this.btStart.setBackgroundColor(Color.rgb(164,233,167));
                 MainActivity.this.chronometer.stop();
                 MainActivity.this.doppler.pause();
             }

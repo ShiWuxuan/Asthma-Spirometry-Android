@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent"
+<LinearLayout xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent"
     xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <TextView
@@ -12,35 +13,6 @@
         android:textSize="28.0sp" />
 
     <LinearLayout
-        android:id="@+id/chart"
-        android:layout_width="wrap_content"
-        android:layout_height="289.0dip"
-        android:layout_gravity="center"
-        android:orientation="vertical">
-
-        <Chronometer
-            android:id="@id/chronometer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:focusable="true"
-            android:textColor="#ff000000"
-            android:textSize="8.0pt" />
-
-        <TextView
-            android:id="@+id/description"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="实验说明" />
-
-        <ImageView
-            android:id="@+id/info"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/info" />
-    </LinearLayout>
-
-    <LinearLayout
         android:id="@+id/button"
         android:layout_width="350.0dip"
         android:layout_height="wrap_content"
@@ -49,17 +21,36 @@
 
         <Button
             android:id="@+id/btStart"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+            android:layout_width="200dp"
+            android:layout_height="50dp"
             android:layout_weight="1.0"
-            android:background="#fff0f0f0"
+            android:background="#A4DFA7"
             android:text="开始录音"
             android:textSize="22.0sp" />
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/chart2"
+        android:id="@+id/chart"
         android:layout_width="wrap_content"
-        android:layout_height="300.0dip"
+        android:layout_height="30dp"
+        android:layout_gravity="center"
+        android:orientation="vertical">
+
+        <Chronometer
+            android:id="@id/chronometer"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:layout_gravity="center_horizontal"
+            android:focusable="true"
+            android:textColor="#ff000000"
+            android:textSize="8.0pt" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/chart2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="50dp"
         android:orientation="vertical" />
 </LinearLayout>
