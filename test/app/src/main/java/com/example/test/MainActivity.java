@@ -119,7 +119,9 @@ public class MainActivity extends AppCompatActivity {
 
     private int tag = 0;
 
-    private long timetag = 0L;
+    private String timetag = "";
+
+    private String timeFormat = "HH:mm:ss:SSS";
 
     String[] permissions = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     List<String> mPermissionList = new ArrayList<>();
@@ -286,6 +288,7 @@ public class MainActivity extends AppCompatActivity {
         this.doppler.setOnReadCallback(new Doppler.OnReadCallback() {
             public void onBandwidthRead(int param1Int1, int param1Int2) {}
 
+            /**
             //写入时间戳
             @RequiresApi(api = Build.VERSION_CODES.O)
             public void writeTimeStamp(){
@@ -310,7 +313,9 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "writeTimeStamp: 写入时间戳失败");
                 }
             }
+            */
 
+            @RequiresApi(api = Build.VERSION_CODES.O)
             public void onBinsRead(double[] param1ArrayOfdouble) {
                 MainActivity.this.mSeries.clear();
                 MainActivity.this.div10.clear();
@@ -445,9 +450,12 @@ public class MainActivity extends AppCompatActivity {
                         long l = MainActivity.this.file_l.length();
                         MainActivity.this.file_l.seek(l);
 //                        MainActivity.access$1602(MainActivity.this, System.currentTimeMillis());
-                        MainActivity.this.timetag = System.currentTimeMillis();
+                        //todo
+                        //MainActivity.this.timetag = System.currentTimeMillis();
+                        MainActivity.this.timetag = LocalDateTime.now(ZoneOffset.of("+8")).format(DateTimeFormatter.ofPattern(timeFormat));
+                        MainActivity.this.file_l.writeBytes(String.valueOf(MainActivity.this.timetag));
                         for (i = MainActivity.this.bins_lowNum; i <= MainActivity.this.bins_highNum; i++) {
-                            MainActivity.this.file_l.writeBytes(String.valueOf(MainActivity.this.timetag));
+//                            MainActivity.this.file_l.writeBytes(String.valueOf(MainActivity.this.timetag));
                             MainActivity.this.file_l.writeBytes(",");
                             MainActivity.this.file_l.writeBytes(String.valueOf(param1ArrayOfdouble[i]));
                         }

@@ -89,7 +89,6 @@ public class Doppler {
   
   private boolean wait_ges = false;
 
-  private long timeTag;
   
   public Doppler() {
     this.bufferSize = AudioRecord.getMinBufferSize(44100, 16, 2);
@@ -344,11 +343,12 @@ public class Doppler {
     int j = arrayOfInt[1];
     if (System.currentTimeMillis() - this.time > 5000L)
       this.calibrate = true;
+    /**
     //判断是否要加入时间戳
     if(System.currentTimeMillis() - this.timeTag > 10000L){
       this.timeTag = System.currentTimeMillis();
       this.readCallback.writeTimeStamp();
-    }
+    }*/
     if (this.isReadCallbackOn)
       callReadCallback(i, j); 
     if (this.isGestureListenerAttached)
@@ -405,7 +405,7 @@ public class Doppler {
       this.microphone.startRecording();
       this.util.startRecord();
       this.repeat = true;
-      Doppler.this.timeTag = System.currentTimeMillis();
+//      Doppler.this.timeTag = System.currentTimeMillis();
       (new Handler()).post(new Runnable() {
             public void run() {
               Doppler.this.optimizeFrequency(19000, 21000);
@@ -444,7 +444,7 @@ public class Doppler {
   public static interface OnReadCallback {
     void onBandwidthRead(int param1Int1, int param1Int2);
 
-    void writeTimeStamp();
+/*    void writeTimeStamp();*/
     
     void onBinsRead(double[] param1ArrayOfdouble);
   }
