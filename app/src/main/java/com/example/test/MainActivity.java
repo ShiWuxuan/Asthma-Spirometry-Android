@@ -8,7 +8,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
-import android.text.style.BackgroundColorSpan;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -45,6 +44,8 @@ import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.SimpleSeriesRenderer;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
+
+import uk.me.berndporr.iirj.Butterworth;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -119,7 +120,9 @@ public class MainActivity extends AppCompatActivity {
 
     private int tag = 0;
 
-    private long timetag = 0L;
+    private String timetag;
+
+    private String timeFormat = "HH:mm:ss:SSS";
 
     String[] permissions = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     List<String> mPermissionList = new ArrayList<>();
@@ -288,8 +291,8 @@ public class MainActivity extends AppCompatActivity {
         this.doppler.setOnReadCallback(new Doppler.OnReadCallback() {
             public void onBandwidthRead(int param1Int1, int param1Int2) {}
 
+            /**
             //写入时间戳
-            @RequiresApi(api = Build.VERSION_CODES.O)
             public void writeTimeStamp(){
                 try{
                     MainActivity mainActivity1 = MainActivity.this;
@@ -311,8 +314,9 @@ public class MainActivity extends AppCompatActivity {
                     exception.printStackTrace();
                     Log.d(TAG, "writeTimeStamp: 写入时间戳失败");
                 }
-            }
+            }*/
 
+            @RequiresApi(api = Build.VERSION_CODES.O)
             public void onBinsRead(double[] param1ArrayOfdouble) {
                 MainActivity.this.mSeries.clear();
                 MainActivity.this.div10.clear();
@@ -447,9 +451,11 @@ public class MainActivity extends AppCompatActivity {
                         long l = MainActivity.this.file_l.length();
                         MainActivity.this.file_l.seek(l);
 //                        MainActivity.access$1602(MainActivity.this, System.currentTimeMillis());
-                        MainActivity.this.timetag = System.currentTimeMillis();
+                        //todo 已修改
+                        // MainActivity.this.timetag = System.currentTimeMillis();
+                        MainActivity.this.timetag = LocalDateTime.now(ZoneOffset.of("+8")).format(DateTimeFormatter.ofPattern(timeFormat));
+                        MainActivity.this.file_l.writeBytes(String.valueOf(MainActivity.this.timetag));
                         for (i = MainActivity.this.bins_lowNum; i <= MainActivity.this.bins_highNum; i++) {
-                            MainActivity.this.file_l.writeBytes(String.valueOf(MainActivity.this.timetag));
                             MainActivity.this.file_l.writeBytes(",");
                             MainActivity.this.file_l.writeBytes(String.valueOf(param1ArrayOfdouble[i]));
                         }
@@ -510,6 +516,32 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+
+    /**
+     * 巴特沃斯带通滤波
+     * @param data 原始音频数据
+     * @param lowCut 最小截止频率
+     * @param highCut 最大截止频率
+     * @param fs 音频采样率
+     * @param order 滤波阶数
+     * @return 滤波结果
+     */
+    public double[] butter_bandpass_filter(Double[] data, double lowCut, double highCut, int fs, int order){
+        Butterworth butterworth = new Butterworth();
+        double widthFrequency=highCut-lowCut;
+        double centerFrequency=(highCut+lowCut)/2;
+        butterworth.bandPass(order,fs,centerFrequency,widthFrequency);
+        double[] list = new double[data.length];
+        int in=0;
+        for(double v : data){
+            double f=butterworth.filter(v);
+            list[in]=f;
+            in++;
+        }
+        return list;
+    }
+
 
     private void checkPermission() {
         mPermissionList.clear();

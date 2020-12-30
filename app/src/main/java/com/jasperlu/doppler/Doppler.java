@@ -6,6 +6,8 @@ import android.util.Log;
 import com.jasperlu.doppler.FFT.FFT;
 import java.io.IOException;
 
+import uk.me.berndporr.iirj.Butterworth;
+
 public class Doppler {
   public static final int DEFAULT_SAMPLE_RATE = 44100;
   
@@ -90,6 +92,12 @@ public class Doppler {
   private boolean wait_ges = false;
 
   private long timeTag;
+
+  private double lowCut = 0.2;
+
+  private double highCut = 0.7;
+
+  private int butterOrder = 2;
   
   public Doppler() {
     this.bufferSize = AudioRecord.getMinBufferSize(44100, 16, 2);
@@ -167,7 +175,9 @@ public class Doppler {
     for (int i = 0; i < this.fft.specSize(); i++)
       arrayOfDouble[i] = this.fft.getBand(i); 
     this.readCallback.onBandwidthRead(paramInt1, paramInt2);
-    this.readCallback.onBinsRead(arrayOfDouble);
+//    double[] filterData = butter_bandpass_filter(arrayOfDouble,lowCut,highCut,SAMPLE_RATE,butterOrder);
+//    this.readCallback.onBinsRead(filterData);
+     this.readCallback.onBinsRead(arrayOfDouble);
   }
   
   public int[] getBandwidth() {
@@ -344,11 +354,12 @@ public class Doppler {
     int j = arrayOfInt[1];
     if (System.currentTimeMillis() - this.time > 5000L)
       this.calibrate = true;
+    /**
     //判断是否要加入时间戳
     if(System.currentTimeMillis() - this.timeTag > 10000L){
       this.timeTag = System.currentTimeMillis();
       this.readCallback.writeTimeStamp();
-    }
+    }*/
     if (this.isReadCallbackOn)
       callReadCallback(i, j); 
     if (this.isGestureListenerAttached)
@@ -444,9 +455,34 @@ public class Doppler {
   public static interface OnReadCallback {
     void onBandwidthRead(int param1Int1, int param1Int2);
 
-    void writeTimeStamp();
+ /*   void writeTimeStamp();*/
     
     void onBinsRead(double[] param1ArrayOfdouble);
+  }
+
+
+  /**
+   * 巴特沃斯带通滤波
+   * @param data 原始音频数据
+   * @param lowCut 最小截止频率
+   * @param highCut 最大截止频率
+   * @param fs 音频采样率
+   * @param order 滤波阶数
+   * @return 滤波结果
+   */
+  public double[] butter_bandpass_filter(double[] data, double lowCut, double highCut, int fs, int order){
+    Butterworth butterworth = new Butterworth();
+    double widthFrequency=highCut-lowCut;
+    double centerFrequency=(highCut+lowCut)/2;
+    butterworth.bandPass(order,fs,centerFrequency,widthFrequency);
+    double[] list = new double[data.length];
+    int in=0;
+    for(double v : data){
+      double f=butterworth.filter(v);
+      list[in]=f;
+      in++;
+    }
+    return list;
   }
 }
 
